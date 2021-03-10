@@ -11,11 +11,14 @@ public class TicTacToe {
 		Board.setArr(arr);
 		Run run=new Run();
 		CheckWin checkWin=Board::checkBoard;
+		CheckDraw checkDraw=Board::checkDraw;
 		Arrays.fill(arr, ' ');
 		while(true) {
-			boolean win=run.process(arr, checkWin);
-			if(win) {
+			int win=run.process(arr, checkWin, checkDraw);
+			if(win==1) {
 				run.won(arr);
+			}else if(win==-1) {
+				run.draw(arr);
 			}
 		}
 	}
@@ -34,11 +37,12 @@ class Run{
 		this.playerValue = playerValue;
 	}
 
-	public boolean process(char[] arr, CheckWin checkWin) {
+	public int process(char[] arr, CheckWin checkWin, CheckDraw checkDraw) {
+		byte in;
 		try {
 			Board.print();
 			player.printPlayerData();
-			byte in=sc.nextByte();
+			in=sc.nextByte();
 			if(in>=1 && in<=9 && arr[in-1]==' ') {
 				playerValue=player.getMove(this);
 				arr[in-1]=playerValue;
@@ -47,24 +51,29 @@ class Run{
 				throw new WrongInputException();
 			}
 		}catch(WrongInputException wie) {
-			sc.next();
 			System.out.println(wie.getMessage());
-			return false;
+			process(arr, checkWin, checkDraw);
 		}catch(InputMismatchException e) {
-			sc.next();
 			System.out.println("\nInvalid input data.. Please enter values/number between 1-9 only\n\n");
-			return false;
+			process(arr, checkWin, checkDraw);
 		}catch(Exception e) {
-			sc.next();
 			System.out.println("Sorry for inconvenience something went wrong..");
-			return false;
-		}
-		return checkWin.check(arr, playerValue);
+			process(arr, checkWin, checkDraw);
+		} 
+		return checkWin.check(playerValue)==true ? 1 : checkDraw.check() ? -1 : 0;
 	}
 	
 	public void won(char[] arr) {
-		
-		System.out.println("\nHola!!... Now "+playerValue+" won the game! \n\n");
+		System.out.println("\nHola!!... Now '"+playerValue+"' won the game! \n\n");
+		newGame(arr);
+	}
+	
+	public void draw(char[] arr) {
+		System.out.println("\nThe match is Draw.. Start a new game..");
+		newGame(arr);
+	}
+	
+	public void newGame(char[] arr) {
 		Arrays.fill(arr, ' ');
 		System.out.println("------------------------------\n");
 		System.out.println("New Game :\n");
@@ -109,7 +118,11 @@ class O extends Player{
 }
 
 interface CheckWin{
-	public boolean check(char arr[], char input);
+	public boolean check(char input);
+}
+
+interface CheckDraw{
+	public boolean check();
 }
 
 class Board{
@@ -136,8 +149,7 @@ class Board{
 		}
 	}
 
-	public static boolean checkBoard(char array[], char input) {
-		arr=array;
+	public static boolean checkBoard(char input) {
 		in=input;
 		return checkRows() || checkColumn() || checkDiagonal();
 	}
@@ -156,6 +168,11 @@ class Board{
 		return arr[0]==in && arr[4]==in && arr[8]==in	||
 				arr[2]==in && arr[4]==in && arr[6]==in;
 	}
+	
+	public static boolean checkDraw() {
+		String str=new String(arr);
+		return !str.contains(" ");
+	} 
 }
 
 class WrongInputException extends Exception{
